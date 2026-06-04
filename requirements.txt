@@ -1,0 +1,16 @@
+# Core AI
+google-genai>=0.3.0
+huggingface_hub>=0.24.0
+
+# UI
+streamlit>=1.35.0
+gradio>=4.31.0
+
+# Visualization & data
+plotly>=5.20.0
+pandas>=2.0.0
+matplotlib>=3.8.0
+
+# Utilities
+python-dotenv>=1.0.0
+requests>=2.31.0
