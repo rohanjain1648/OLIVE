@@ -1,5 +1,5 @@
 # Core AI
-google-genai>=0.3.0
+groq>=1.0.0
 huggingface_hub>=0.24.0
 
 # UI

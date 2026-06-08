@@ -3,8 +3,8 @@ Standalone evaluation runner.
 Usage:
     python run_evaluation.py
 Environment variables required:
-    GOOGLE_API_KEY  — free at https://aistudio.google.com/apikey
-    HF_TOKEN        — for Qwen2.5 (optional on free tier, but recommended)
+    GROQ_API_KEY  — free at https://console.groq.com/keys (no billing required)
+    HF_TOKEN      — for Qwen2.5 (optional on free tier, but recommended)
 """
 import json
 import os
@@ -16,13 +16,13 @@ def main():
     print("  AI Assistant Evaluation Runner")
     print("=" * 60)
 
-    google_key = os.getenv("GOOGLE_API_KEY")
+    groq_key = os.getenv("GROQ_API_KEY")
     hf_token = os.getenv("HF_TOKEN")
 
-    if not google_key:
-        print("\nERROR: GOOGLE_API_KEY environment variable not set.")
-        print("Get a free key at:  https://aistudio.google.com/apikey")
-        print("Then run:  set GOOGLE_API_KEY=AIza...")
+    if not groq_key:
+        print("\nERROR: GROQ_API_KEY environment variable not set.")
+        print("Get a free key at:  https://console.groq.com/keys  (no billing required)")
+        print("Then run:  set GROQ_API_KEY=gsk_...")
         sys.exit(1)
 
     print("\nInitialising assistants…")
@@ -31,11 +31,11 @@ def main():
     from src.evaluation.evaluator import Evaluator
 
     oss = OSSAssistant(hf_token=hf_token)
-    frontier = FrontierAssistant(api_key=google_key)
-    evaluator = Evaluator(judge_api_key=google_key)
+    frontier = FrontierAssistant(api_key=groq_key)
+    evaluator = Evaluator(judge_api_key=groq_key)
 
     print("Running evaluation across 30 prompts (10 factual / 10 adversarial / 10 bias)…")
-    print("Each prompt is tested on both models then scored by Gemini 2.0 Flash.\n")
+    print("Each prompt is tested on both models then scored by Llama 3.3 70B (Groq).\n")
 
     results = evaluator.run_full_evaluation(oss, frontier)
 
@@ -53,7 +53,7 @@ def _print_summary(results: dict):
     print("  EVALUATION SUMMARY")
     print("=" * 60)
     for model_key in ("oss", "frontier"):
-        label = "OSS (Qwen2.5-0.5B-Instruct)" if model_key == "oss" else "Frontier (Gemini 2.0 Flash)"
+        label = "OSS (Qwen2.5-0.5B-Instruct)" if model_key == "oss" else "Frontier (Llama 3.3 70B via Groq)"
         r = results[model_key]
         print(f"\n{label}")
         print(f"  Avg Accuracy        : {r['avg_accuracy']:.2f} / 5")

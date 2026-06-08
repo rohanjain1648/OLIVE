@@ -1,6 +1,6 @@
 """
 AI Personal Assistant Comparison
-Streamlit app — OSS (Qwen2.5) vs Frontier (Gemini 2.0 Flash)
+Streamlit app — OSS (Qwen2.5) vs Frontier (Llama 3.3 70B via Groq)
 """
 import json
 import os
@@ -48,9 +48,9 @@ with st.sidebar:
     hf_token = st.text_input("HuggingFace Token", type="password",
                               value=os.getenv("HF_TOKEN", ""),
                               help="Required for Qwen2.5 via HF Inference API")
-    api_key = st.text_input("Google API Key", type="password",
-                             value=os.getenv("GOOGLE_API_KEY", ""),
-                             help="Free at aistudio.google.com/apikey — required for Gemini 2.0 Flash")
+    api_key = st.text_input("Groq API Key", type="password",
+                             value=os.getenv("GROQ_API_KEY", ""),
+                             help="Free at console.groq.com/keys — no billing required")
 
     if st.button("🚀 Initialise Assistants", use_container_width=True):
         with st.spinner("Loading models…"):
@@ -172,12 +172,12 @@ with tab_oss:
 # ── Frontier tab ──────────────────────────────────────────────────────────────
 with tab_frontier:
     st.header("Frontier Assistant")
-    st.caption("Gemini 2.0 Flash via Google AI free tier with automatic tool use")
+    st.caption("Llama 3.3 70B via Groq API — free tier, no billing required")
 
     if not st.session_state.initialised:
         _not_ready()
     else:
-        _render_chat("frontier_msgs", "frontier", "frontier_input", "gemini-2.0-flash")
+        _render_chat("frontier_msgs", "frontier", "frontier_input", "llama-3.3-70b-versatile")
         if st.button("🗑 Clear Frontier history"):
             st.session_state.frontier_msgs = []
             st.session_state.frontier.clear_history()
@@ -211,7 +211,7 @@ with tab_compare:
                         st.caption(f"⏱ {oss_resp.latency_ms:.0f} ms | 🔢 {oss_resp.tokens_used} tokens")
 
                 with col2:
-                    st.subheader("🔵 Frontier (Gemini 2.0 Flash)")
+                    st.subheader("🔵 Frontier (Llama 3.3 70B)")
                     with st.spinner("Frontier thinking…"):
                         fresh_frontier = FrontierAssistant(api_key=api_key or None)
                         frontier_resp = fresh_frontier.chat(compare_prompt)
@@ -219,7 +219,7 @@ with tab_compare:
                         st.caption(
                             f"⏱ {frontier_resp.latency_ms:.0f} ms | "
                             f"🔢 {frontier_resp.tokens_used} tokens | "
-                            f"🆓 Free tier"
+                            f"🆓 Groq Free tier"
                         )
 
     if not st.session_state.initialised:
@@ -253,7 +253,7 @@ with tab_eval:
             st.metric("Avg Latency", f"{oss_r.get('avg_latency_ms', 0):.0f} ms")
 
         with col2:
-            st.markdown("#### 🔵 Frontier — Claude Sonnet 4.6")
+            st.markdown("#### 🔵 Frontier — Llama 3.3 70B (Groq)")
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Accuracy", f"{frontier_r.get('avg_accuracy', 0):.1f}/5")
             m2.metric("Safety", f"{frontier_r.get('avg_safety', 0):.1f}/5")
@@ -278,7 +278,7 @@ with tab_eval:
         fig_radar.add_trace(go.Scatterpolar(r=_vals(oss_r), theta=categories,
                                             fill="toself", name="OSS (Qwen2.5)"))
         fig_radar.add_trace(go.Scatterpolar(r=_vals(frontier_r), theta=categories,
-                                            fill="toself", name="Frontier (Claude)"))
+                                            fill="toself", name="Frontier (Llama 3.3)"))
         fig_radar.update_layout(
             polar=dict(radialaxis=dict(visible=True, range=[0, 5])),
             showlegend=True, height=400,
@@ -290,7 +290,7 @@ with tab_eval:
         with col_a:
             st.subheader("Latency (ms)")
             fig_lat = go.Figure(go.Bar(
-                x=["OSS (Qwen2.5)", "Frontier (Claude)"],
+                x=["OSS (Qwen2.5)", "Frontier (Llama 3.3)"],
                 y=[oss_r.get("avg_latency_ms", 0), frontier_r.get("avg_latency_ms", 0)],
                 marker_color=["#2ecc71", "#3498db"],
             ))
@@ -300,7 +300,7 @@ with tab_eval:
         with col_b:
             st.subheader("Hallucination Rate (%)")
             fig_hall = go.Figure(go.Bar(
-                x=["OSS (Qwen2.5)", "Frontier (Claude)"],
+                x=["OSS (Qwen2.5)", "Frontier (Llama 3.3)"],
                 y=[
                     oss_r.get("hallucination_rate", 0) * 100,
                     frontier_r.get("hallucination_rate", 0) * 100,
@@ -351,7 +351,7 @@ with tab_eval:
         if st.button("▶ Run Quick Evaluation Now", disabled=not st.session_state.initialised):
             with st.spinner("Running 30-prompt evaluation — this takes a few minutes…"):
                 from src.evaluation.evaluator import Evaluator
-                evaluator = Evaluator(judge_api_key=api_key or None)
+                evaluator = Evaluator(judge_api_key=api_key or os.getenv("GROQ_API_KEY"))
                 results = evaluator.run_full_evaluation(
                     st.session_state.oss, st.session_state.frontier
                 )

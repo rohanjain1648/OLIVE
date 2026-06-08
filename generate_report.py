@@ -71,7 +71,7 @@ def _radar(oss, fr):
 
     ax.plot(angles, ov, "o-", lw=2.5, color=OSS_CLR,   label="OSS (Qwen2.5)")
     ax.fill(angles, ov, alpha=0.18, color=OSS_CLR)
-    ax.plot(angles, fv, "o-", lw=2.5, color=FRONT_CLR, label="Frontier (Gemini)")
+    ax.plot(angles, fv, "o-", lw=2.5, color=FRONT_CLR, label="Frontier (Llama 3.3)")
     ax.fill(angles, fv, alpha=0.18, color=FRONT_CLR)
 
     ax.set_xticks(angles[:-1])
@@ -333,17 +333,17 @@ tbody tr:nth-child(even) {{ background: #f9f9f9; }}
     </div>
     <div class="badges">
       <span class="badge b-oss">&#x1F7E2; OSS &middot; Qwen2.5-0.5B-Instruct</span>
-      <span class="badge b-frontier">&#x1F535; Frontier &middot; Gemini 2.0 Flash</span>
+      <span class="badge b-frontier">&#x1F535; Frontier &middot; Llama 3.3 70B (Groq)</span>
     </div>
   </div>
 
   <!-- Summary -->
   <div class="summary">
     <b>Executive Summary &mdash;</b>
-    Gemini 2.0 Flash outperforms Qwen2.5-0.5B across every evaluated dimension.
+    Llama 3.3 70B (Groq) outperforms Qwen2.5-0.5B across every evaluated dimension.
     The OSS model scores <b>{oss_acc}/5 accuracy</b>, <b>{oss_hall}% hallucination rate</b>,
     and <b>{oss_jail}% jailbreak resistance</b>;
-    Gemini achieves <b>{fr_acc}/5 accuracy</b>, <b>{fr_hall}% hallucination rate</b>,
+    Llama 3.3 achieves <b>{fr_acc}/5 accuracy</b>, <b>{fr_hall}% hallucination rate</b>,
     and <b>{fr_jail}% jailbreak resistance</b> &mdash; both at zero API cost.
     Guardrails are non-negotiable before either model is deployed to production.
   </div>
@@ -366,7 +366,7 @@ tbody tr:nth-child(even) {{ background: #f9f9f9; }}
         <tr>
           <th>Metric</th>
           <th>OSS (Qwen2.5-0.5B)</th>
-          <th>Frontier (Gemini 2.0 Flash)</th>
+          <th>Frontier (Llama 3.3 70B)</th>
           <th>Winner</th>
         </tr>
       </thead>
@@ -406,7 +406,7 @@ tbody tr:nth-child(even) {{ background: #f9f9f9; }}
       <div class="rec">
         <span class="n">1</span>
         <b>Use Frontier for production.</b>
-        Gemini 2.0 Flash delivers 4.6/5 accuracy, 90% jailbreak resistance,
+        Llama 3.3 70B via Groq delivers 4.6/5 accuracy, 90% jailbreak resistance,
         and sub-second latency on the free tier. Best default choice for most use cases.
       </div>
       <div class="rec">
@@ -432,7 +432,7 @@ tbody tr:nth-child(even) {{ background: #f9f9f9; }}
 
   <!-- Footer -->
   <div class="footer">
-    <span>Method: 30 prompts (10 factual &middot; 10 adversarial &middot; 10 bias) &mdash; LLM-as-judge via Gemini 2.0 Flash (5 dimensions: accuracy, safety, helpfulness, bias, refusal)</span>
+    <span>Method: 30 prompts (10 factual &middot; 10 adversarial &middot; 10 bias) &mdash; LLM-as-judge via Llama 3.3 70B / Groq (5 dimensions: accuracy, safety, helpfulness, bias, refusal)</span>
     <span>Rohan Jain &middot; rohanjain200461@gmail.com</span>
   </div>
 

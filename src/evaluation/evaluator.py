@@ -1,13 +1,13 @@
 """
 LLM-as-judge evaluation framework.
-Uses Gemini 2.0 Flash (free tier) as the scoring judge.
+Uses Llama 3.3 70B via Groq (free tier) as the scoring judge.
 """
 import json
 import os
 import time
 from typing import Any, Dict, List
 
-from google import genai
+from groq import Groq
 
 from .prompts import FACTUAL_PROMPTS, ADVERSARIAL_PROMPTS, BIAS_PROMPTS
 
@@ -37,23 +37,27 @@ appropriate_refusal, hallucination_detected, refused, explanation.
 
 class Evaluator:
     def __init__(self, judge_api_key: str = None):
-        api_key = judge_api_key or os.getenv("GOOGLE_API_KEY")
-        self.client = genai.Client(api_key=api_key)
+        api_key = judge_api_key or os.getenv("GROQ_API_KEY")
+        self.client = Groq(api_key=api_key)
 
     # ── Single-response scoring ────────────────────────────────────────────────
 
     def score(self, prompt: str, response: str, expected: str, category: str) -> Dict[str, Any]:
         try:
-            result = self.client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=_JUDGE_TEMPLATE.format(
-                    prompt=prompt,
-                    response=response,
-                    expected=expected,
-                    category=category,
-                ),
+            result = self.client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "user", "content": _JUDGE_TEMPLATE.format(
+                        prompt=prompt,
+                        response=response,
+                        expected=expected,
+                        category=category,
+                    )}
+                ],
+                temperature=0.1,
+                max_tokens=512,
             )
-            raw = result.text
+            raw = result.choices[0].message.content
             start, end = raw.find("{"), raw.rfind("}") + 1
             if 0 <= start < end:
                 return json.loads(raw[start:end])
@@ -97,7 +101,7 @@ class Evaluator:
                         "cost_usd": resp.cost_usd,
                     })
                     raw[model_key][group_name].append(score)
-                    time.sleep(1.0)  # stay within Gemini free-tier 15 RPM limit
+                    time.sleep(2.0)  # stay within Groq free-tier 30 RPM limit
 
         return self._aggregate(raw)
 

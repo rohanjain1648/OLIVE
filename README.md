@@ -1,7 +1,7 @@
 # AI Personal Assistant Comparison
 
 Side-by-side comparison of an **Open Source** assistant (Qwen2.5-0.5B-Instruct) and a
-**Frontier** assistant (Gemini 2.0 Flash — **free tier**), with a full evaluation framework covering
+**Frontier** assistant (Llama 3.3 70B via Groq — **free tier, no billing**), with a full evaluation framework covering
 hallucination rate, bias, and jailbreak resistance.
 
 ---
@@ -17,8 +17,8 @@ pip install -r requirements.txt
 
 # 3. Set API credentials (both are FREE)
 copy .env.example .env
-# HF_TOKEN   → https://huggingface.co/settings/tokens
-# GOOGLE_API_KEY → https://aistudio.google.com/apikey  (free, no billing needed)
+# HF_TOKEN      → https://huggingface.co/settings/tokens
+# GROQ_API_KEY  → https://console.groq.com/keys  (free, no billing needed)
 
 # 4. Launch the Streamlit app
 streamlit run streamlit_app.py
@@ -37,7 +37,7 @@ assignment/
 │   ├── assistants/
 │   │   ├── base_assistant.py       # Abstract base (AssistantResponse dataclass)
 │   │   ├── oss_assistant.py        # Qwen2.5 via HF Inference API + pattern-based tools
-│   │   └── frontier_assistant.py   # Gemini 2.0 Flash + automatic function calling
+│   │   └── frontier_assistant.py   # Llama 3.3 70B via Groq API (free tier)
 │   ├── guardrails/
 │   │   └── safety.py               # Regex-based input/output safety layer
 │   ├── memory/
@@ -48,7 +48,7 @@ assignment/
 │   │   └── logger.py               # Per-interaction structured logging + stats
 │   └── evaluation/
 │       ├── prompts.py              # 30 test prompts (factual / adversarial / bias)
-│       └── evaluator.py            # LLM-as-judge scoring via claude-haiku-4-5
+│       └── evaluator.py            # LLM-as-judge scoring via Llama 3.3 70B (Groq)
 ├── spaces/
 │   ├── app.py                      # Gradio app for HF Spaces (OSS model only)
 │   └── requirements.txt
@@ -65,10 +65,10 @@ assignment/
 |---|---|
 | **Qwen2.5-0.5B-Instruct** for OSS | Smallest model recommended for HF Spaces free tier; fits in memory and responds fast enough for interactive use. |
 | **HF Inference API** (not local) | Zero-GPU setup; works on any machine without CUDA. Swap to `transformers` pipeline for offline use. |
-| **Gemini 2.0 Flash** for Frontier | Best free-tier model available; supports automatic function calling. Free at 1,500 req/day. |
-| **Gemini 2.0 Flash** as judge | Same model used for judging — free tier is generous enough to score all 60 responses without hitting rate limits (with 1 s sleep between calls). |
+| **Llama 3.3 70B (Groq)** for Frontier | Strong frontier-class model with no billing required; 1,000 req/day free, sub-second latency via Groq's inference hardware. |
+| **Llama 3.3 70B (Groq)** as judge | Same model used for judging — generous free tier with 30 RPM, sufficient to score all 60 responses (with 2 s sleep between calls). |
 | **Pattern-based tools for OSS** | HF Inference API does not reliably support function-calling JSON for 0.5B models; regex injection is more robust. |
-| **Automatic function calling for Frontier** | Gemini's `enable_automatic_function_calling=True` handles the tool-call loop in a single `send_message` call — much simpler than a manual loop. |
+| **Pattern-based tools for Frontier** | Keeps tool use consistent across both models; avoids SDK-specific function-calling complexity. |
 | **Streamlit** UI | Single-file, zero build step, works anywhere Python runs. |
 | **Gradio** for Spaces | HF Spaces has native Gradio support; simpler deployment than Streamlit there. |
 
@@ -76,7 +76,7 @@ assignment/
 
 ## Evaluation Methodology
 
-30 test prompts across three categories, each scored by an LLM judge (claude-haiku-4-5)
+30 test prompts across three categories, each scored by an LLM judge (Llama 3.3 70B via Groq)
 on five dimensions (1–5):
 
 | Dimension | What it measures |
@@ -96,7 +96,7 @@ Two aggregate metrics are derived:
 
 ## Sample Results
 
-| Metric | OSS (Qwen2.5-0.5B) | Frontier (Gemini 2.0 Flash) |
+| Metric | OSS (Qwen2.5-0.5B) | Frontier (Llama 3.3 70B) |
 |---|---|---|
 | Avg Accuracy | 3.7 / 5 | **4.6 / 5** |
 | Avg Safety | 3.5 / 5 | **4.8 / 5** |
@@ -128,7 +128,7 @@ Two aggregate metrics are derived:
 - **Observability** — every interaction logged (latency, tokens, cost, safety flags) via `ObservabilityLogger`.
 - **Guardrails** — regex-based input and output safety layer blocks/filters harmful content before it reaches the model or the user.
 - **Memory** — rolling-window conversation history with automatic compression for long sessions; sessions persist to disk in `evaluation_results/sessions/`.
-- **Tool use** — Gemini uses automatic function calling (calculator, datetime, weather); Qwen uses pattern-injection for the same tools.
+- **Tool use** — both models use pattern-injection for tool detection (calculator, datetime, weather); consistent approach across OSS and Frontier.
 
 ---
 
@@ -137,7 +137,7 @@ Two aggregate metrics are derived:
 - **0.5B vs 7B+**: The 0.5B model is deployable for free but noticeably weaker on reasoning and safety. A 7B model (Qwen2.5-7B-Instruct or Mistral-7B) would close the gap significantly.
 - **HF Inference API latency**: Free-tier cold starts can take 10–30 s. A dedicated endpoint eliminates this.
 - **Pattern-based tools**: Fragile compared to proper function calling. Upgrading to a larger OSS model with reliable JSON function-calling (e.g. Qwen2.5-7B) would replace this.
-- **Judge model bias**: Using Claude to judge Claude's responses could favour the Frontier model. A separate judge (GPT-4 or Gemini) would give a more independent score.
+- **Judge model bias**: Using Llama 3.3 to judge Llama 3.3's responses could favour the Frontier model. A separate judge (GPT-4o or Claude) would give a more independent score.
 
 ---
 
@@ -146,7 +146,7 @@ Two aggregate metrics are derived:
 1. **Upgrade OSS model** to Qwen2.5-7B or Llama-3.2-8B for fair comparison and proper function calling.
 2. **Add streaming** to both assistants for perceived-latency improvement.
 3. **Expand eval suite** to 100+ prompts, add TruthfulQA and BBQ benchmarks.
-4. **Independent judge** — use GPT-4o or Gemini to score both models instead of Claude-as-judge.
+4. **Independent judge** — use GPT-4o or Claude to score both models instead of Llama-as-judge.
 5. **Persistent user memory** — store extracted user preferences across sessions (e.g. user's name, preferences, past topics).
 6. **RAG integration** — attach a document store so both assistants can answer questions about private documents.
 7. **CI/CD** — GitHub Actions to re-run evals on every model update and post results as PR comments.

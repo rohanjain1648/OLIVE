@@ -1,6 +1,6 @@
 """
 Basic tools shared by both assistants.
-- Frontier (Gemini): passed as Python callables → automatic function calling
+- Frontier (Groq/Llama): injected via pattern detection into augmented prompt
 - OSS (Qwen): pattern-injected into the prompt before calling the model
 """
 import math

@@ -17,7 +17,7 @@ class OSSAssistant(BaseAssistant):
     def __init__(self, system_prompt: Optional[str] = None, hf_token: Optional[str] = None):
         super().__init__(system_prompt)
         token = hf_token or os.getenv("HF_TOKEN")
-        self.client = InferenceClient(model=self.MODEL_ID, token=token)
+        self.client = InferenceClient(provider="featherless-ai", api_key=token)
 
     # ── Public API ─────────────────────────────────────────────────────────────
 
@@ -33,6 +33,7 @@ class OSSAssistant(BaseAssistant):
         start = time.time()
         try:
             resp = self.client.chat_completion(
+                model=self.MODEL_ID,
                 messages=messages,
                 max_tokens=512,
                 temperature=0.7,
@@ -82,7 +83,7 @@ class OSSAssistant(BaseAssistant):
                 parts.append(f"[Tool: calculator] {calc_m.group(1).strip()} = {result['result']}")
 
         # Weather
-        weather_m = re.search(r"weather\s+(?:in\s+)?([A-Z][a-zA-Z\s]{2,30})", message)
+        weather_m = re.search(r"weather\s+(?:in\s+)?([A-Za-z][a-zA-Z\s]{2,30})", message, re.I)
         if weather_m:
             result = get_weather(weather_m.group(1).strip())
             parts.append(f"[Tool: get_weather] {result}")

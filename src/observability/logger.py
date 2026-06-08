@@ -65,7 +65,7 @@ class ObservabilityLogger:
             filename = f"logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         path = os.path.join(self.log_dir, filename)
         with open(path, "w", encoding="utf-8") as f:
-            json.dump([asdict(l) for l in self._logs], f, indent=2)
+            json.dump([asdict(entry) for entry in self._logs], f, indent=2)
         return path
 
     # ── Aggregates ─────────────────────────────────────────────────────────────
